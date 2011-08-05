@@ -440,8 +440,13 @@ sub data2rrd {
             $rrdfile          = $conf{RRDPATH} . "/" . $data[$i]{hostname} . "/" . $data[$i]{servicedesc} . "_" . $data[$i]{name} . ".rrd";
 
             # DS is set to 1
-            @ds_create = "DS:$DS:$data[$i]{dstype}:$data[$i]{rrd_heartbeat}:$data[$i]{rrd_min}:$data[$i]{rrd_max}";
-            $ds_update = "$data[$i]{timet}:$data[$i]{value}";
+            # create WARN CRIT MAX DS
+            push (@ds_create, "DS:$DS:$data[$i]{dstype}:$data[$i]{rrd_heartbeat}:$data[$i]{rrd_min}:$data[$i]{rrd_max}");
+            push (@ds_create, "DS:WARN:GAUGE:$data[$i]{rrd_heartbeat}:$data[$i]{rrd_min}:$data[$i]{rrd_max}");
+            push (@ds_create, "DS:CRIT:GAUGE:$data[$i]{rrd_heartbeat}:$data[$i]{rrd_min}:$data[$i]{rrd_max}");
+            push (@ds_create, "DS:MAX:GAUGE:$data[$i]{rrd_heartbeat}:$data[$i]{rrd_min}:$data[$i]{rrd_max}");
+
+	    $ds_update = "$data[$i]{timet}:$data[$i]{value}:$data[$i]{warning}:$data[$i]{critical}:$data[$i]{max}";
             @rrd_state = write_rrd();
             @ds_create = ();
             $ds_update = "";
@@ -929,6 +934,16 @@ sub _parse {
     # Strip Range indicators
     $p{warning}  =~ s/[~@]// if($p{warning});
     $p{critical} =~ s/[~@]// if($p{critical});
+
+     # put value to unknown when no warning or critical values are found in perfdata (needed for pnp-internal rrds)
+     if ( !$p{warning} ) {
+       $p{warning} = 'U';
+       $p{critical} ='U';
+     }
+     # same thing for max value
+     if ( !$p{max} ) {
+       $p{max} = 'U';
+     }
 
     return ( $string, %p );
 }
