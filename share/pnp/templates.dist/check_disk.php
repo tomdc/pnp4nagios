@@ -38,27 +38,26 @@ foreach ($this->DS as $KEY=>$VAL) {
 	$opt[$KEY]     = "--vertical-label $label -l 0 $upper --title \"Filesystem $ds_name[$KEY]\" ";
 	# Graph Definitions
 	$def[$KEY]     = rrd::def( "var1", $VAL['RRDFILE'], $VAL['DS'], "AVERAGE" ); 
+	$def[$KEY]     .= rrd::def( "warning", $VAL['RRDFILE'], 'WARN', "AVERAGE" ); 
+	$def[$KEY]     .= rrd::def( "critical", $VAL['RRDFILE'], 'CRIT', "AVERAGE" ); 
+	$def[$KEY]     .= rrd::def( "max", $VAL['RRDFILE'], 'MAX', "AVERAGE" ); 
 	# "normalize" graph values
 	$def[$KEY]    .= rrd::cdef( "v_n","var1,$divis,/");
+	$def[$KEY]    .= rrd::cdef( "w_n","warning,$divis,/");
+	$def[$KEY]    .= rrd::cdef( "c_n","critical,$divis,/");
+	$def[$KEY]    .= rrd::cdef( "m_n","max,$divis,/");
 	$def[$KEY]    .= rrd::area( "v_n", "#c6c6c6",  $ds_name[$KEY] );
-	$def[$KEY]    .= rrd::line1( "v_n", "#003300" );
 	# show values in legend
 	$def[$KEY]    .= rrd::gprint( "v_n", "LAST", "$fmt $label$pct $maximum ");
-	$def[$KEY]    .= rrd::gprint( "v_n", "AVERAGE", "$fmt $label$pct avg used $return");
+	$def[$KEY]    .= rrd::gprint( "v_n", "AVERAGE", "$fmt $label$pct avg used $return\\n");
 	# create max line and legend
 	if ($VAL['MAX'] != "") {
-		$def[$KEY] .= rrd::gprint( "v_n", "MAX", "$fmt $label$pct max used \\n" );
-		$def[$KEY] .= rrd::hrule( $max[1], "#003300", "Size of FS  $max[0] \\n");
+		$def[$KEY] .= rrd::line1( "m_n", "#000000" , "FS Size "); 
+		$def[$KEY] .= rrd::gprint( "m_n", "MAX", "$fmt $label$pct\\n" );
 	}
-	# create warning line and legend
-	if ($VAL['WARN'] != "") {
-		$warn = pnp::adjust_unit( $VAL['WARN'].$unit,1024,$fmt );
-		$def[$KEY] .= rrd::hrule( $warn[1], "#ffff00", "Warning  on $warn[0] \\n" );
-	}
-	# create critical line and legend
-	if ($VAL['CRIT'] != "") {
-		$crit = pnp::adjust_unit( $VAL['CRIT'].$unit,1024,$fmt );
-		$def[$KEY] .= rrd::hrule( $crit[1], "#ff0000", "Critical on $crit[0]\\n" );
-	}
+        $def[$KEY]    .= rrd::line1( "w_n", "#009933" , "Warning " );
+	$def[$KEY]    .= rrd::gprint( "w_n", "AVERAGE", "$fmt $label\\n");
+        $def[$KEY]    .= rrd::line1( "c_n", "#FF0000" , "Critical" );
+	$def[$KEY]    .= rrd::gprint( "c_n", "AVERAGE", "$fmt $label\\n");
 }
 ?>
