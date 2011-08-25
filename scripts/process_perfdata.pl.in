@@ -935,14 +935,14 @@ sub _parse {
     $p{warning}  =~ s/[~@]// if($p{warning});
     $p{critical} =~ s/[~@]// if($p{critical});
 
-     # put value to unknown when no warning or critical values are found in perfdata (needed for pnp-internal rrds)
+     # put value to 0 when no warning or critical values are found in perfdata (needed for pnp-internal rrds)
      if ( !$p{warning} ) {
-       $p{warning} = 'U';
-       $p{critical} ='U';
+       $p{warning} = '0';
+       $p{critical} ='0';
      }
      # same thing for max value
      if ( !$p{max} ) {
-       $p{max} = 'U';
+       $p{max} = '0';
      }
 
     return ( $string, %p );
